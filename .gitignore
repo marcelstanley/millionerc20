@@ -21,7 +21,6 @@
 go.work
 
 .sunodo
-*.png
 
 # Templ generated code
 *_templ.go
