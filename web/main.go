@@ -57,6 +57,9 @@ func main() {
 		getHandler(w, r)
 	})
 
+	// Include the static content.
+	mux.Handle("/state/", http.StripPrefix("/state/", http.FileServer(http.Dir("state"))))
+
 	// Add the middleware.
 	muxWithSessionMiddleware := sessionManager.LoadAndSave(mux)
 
