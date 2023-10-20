@@ -1,21 +1,40 @@
 package main
 
-import "strconv"
+templ header() {
+    <h1>The Million ERC-20 Page</h1>
+}
 
-templ counts(global, user int) {
-    <div>Global: { strconv.Itoa(global) }</div>
-    <div>User: { strconv.Itoa(user) }</div>
-    <img src="/state/.dapp_image.png"/>
+templ status(response string) {
+   <div>{ response }</div>
 }
 
 templ form() {
-    <form action="/" method="POST">
-        <div><button type="submit" name="global" value="global">Global</button></div>
-        <div><button type="submit" name="user" value="user">User</button></div>
+    <h2>Submit your image:</h2>
+    <form action="/" enctype="multipart/form-data" method="POST">
+        <div>
+            <label for="file">File name:</label>
+            <input type="file" id="file" name="file" accept=".png"></input>
+            <label for="posX">X:</label>
+            <input type="number" id="posX" name="posX" min="0" max="1000"></input>
+            <label for="posY">Y:</label>
+            <input type="number" id="" name="posY" min="0" max="1000"></input>
+        </div>
+        <div>
+            <input type="reset" value="Reset"></input>
+            <!--            <input type="submit" value="Submit_not_button"></input>-->
+            <button type="submit" name="global" value="global">Submit</button>
+        </div>
     </form>
 }
 
-templ page(global, user int) {
-    @counts(global, user)
+templ dapp_img() {
+    <h2>Current state:</h2>
+    <img src="/state/dapp_image.png"/>
+}
+
+templ page(response string) {
+    @header()
     @form()
+    @status(response)
+    @dapp_img()
 }

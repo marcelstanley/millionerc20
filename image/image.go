@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/draw"
 	"image/png"
+	"io"
 	"log"
 	"os"
 
@@ -49,7 +50,12 @@ func Load(filename string) (*image.RGBA, error) {
 		return nil, err
 	}
 	defer f.Close()
-	img, err := png.Decode(f)
+
+	return Decode(f)
+}
+
+func Decode(r io.Reader) (*image.RGBA, error) {
+	img, err := png.Decode(r)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +67,8 @@ func Load(filename string) (*image.RGBA, error) {
 	return rgba, nil
 }
 
-func AddToDappImage(rect image.Rectangle, img image.Image) error {
-	draw.Draw(dappImage, rect, img, image.Pt(0, 0), draw.Over)
+func AddToDappImage(img *image.RGBA) error {
+	draw.Draw(dappImage, img.Bounds(), img, image.Pt(0, 0), draw.Over)
 
 	err := Save(DAPP_IMAGE_NAME, dappImage)
 	if err != nil {
