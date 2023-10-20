@@ -3,6 +3,7 @@ module github.com/marcelstanley/millionerc20
 go 1.21.1
 
 require (
+	github.com/a-h/templ v0.2.408
 	github.com/gligneul/eggroll v0.0.0-20231016004128-e11b8e406c54
 	github.com/kelindar/bitmap v1.5.1
 	github.com/spf13/cobra v1.7.0
