@@ -65,4 +65,10 @@ func addImage(cmd *cobra.Command, args []string) {
 		return
 	}
 	log.Printf("image accepted\n")
+
+	err = cli_image.AddToDappImage(rect, img)
+	if err != nil {
+		log.Printf("DApp Image could not be updated: %v", err)
+		return
+	}
 }

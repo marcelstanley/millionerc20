@@ -4,6 +4,7 @@
 package image
 
 import (
+	"fmt"
 	"image"
 	"image/draw"
 	"image/png"
@@ -58,4 +59,15 @@ func Load(filename string) (*image.RGBA, error) {
 	draw.Draw(rgba, rgba.Bounds(), img, b.Min, draw.Src)
 
 	return rgba, nil
+}
+
+func AddToDappImage(rect image.Rectangle, img image.Image) error {
+	draw.Draw(dappImage, rect, img, image.Pt(0, 0), draw.Over)
+
+	err := Save(DAPP_IMAGE_NAME, dappImage)
+	if err != nil {
+		return fmt.Errorf("image not saved: %v", err)
+	}
+
+	return nil
 }
