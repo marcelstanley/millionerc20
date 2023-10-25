@@ -3,15 +3,16 @@ package main
 import (
 	"fmt"
 	"image"
+	"image/png"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/marcelstanley/millionerc20"
+	"github.com/marcelstanley/millionerc20/client"
 	dapp_client "github.com/marcelstanley/millionerc20/client"
-	dapp_image "github.com/marcelstanley/millionerc20/image"
+	dapp_cli_image "github.com/marcelstanley/millionerc20/image"
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 )
 
 type GlobalState struct {
-	Count int
+	DappImage *image.RGBA
 }
 
 var global GlobalState
@@ -32,8 +33,6 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 	component := page(response)
 	component.Render(r.Context(), w)
 	//log.Printf("response: %v\n", response)
-
-	// TODO Display dapp-image retieved from dapp endpoint
 }
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
@@ -62,42 +61,43 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	img, err := dapp_image.Decode(f)
+	img, err := dapp_cli_image.Decode(f)
 	if err != nil {
 		updateStatus(w, r, err.Error())
 		return
 	}
 	//log.Printf("img.Rect: %v\n", img.Rect)
 
-	// Translate image
 	x, err := strconv.Atoi(r.FormValue("posX"))
+	if err != nil {
+		x = 0
+	}
 	y, err := strconv.Atoi(r.FormValue("posY"))
-	if err == nil {
-		//log.Printf("pt: (%v, %v\n)", x, y)
-		img.Rect = img.Rect.Add(image.Pt(x, y))
-		//log.Printf("NEW img.Rect: %v\n", img.Rect)
+	if err != nil {
+		y = 0
 	}
 
-	//TODO use goroutine for this?
 	// updateStatus(w, r, "Sending image with bounds %v", img.Rect.Bounds())
 	log.Printf("sending image with bounds %v", img.Rect.Bounds())
 
 	// submit image to dapp and capture result
-	_, err = dapp_client.SendAndCheck(&millionerc20.MetaImage{img.Rect})
+	_, err = dapp_client.SendImageAndWait(image.Pt(x, y), img)
 	if err != nil {
 		log.Printf("err: %v\n", err)
 		updateStatus(w, r, err.Error())
 		return
 	}
-	//updateStatus(w, r, "Upload successful!")
 
-	// dapp must update
-
-	// Display form
-	//getHandler(w, r)
+	getHandler(w, r)
 }
 
-// TODO Understand why a call to udpate Status triggers an addiational call to getHandler under the hood
+func updateDappImage(w http.ResponseWriter) {
+	global.DappImage = client.GetDappImage()
+	png.Encode(w, global.DappImage)
+}
+
+// TODO Understand why a call to updateStatus triggers an additional call to getHandler under the hood
+// TODO use goroutine for this?
 func updateStatus(w http.ResponseWriter, r *http.Request, status string, values ...any) {
 	if values != nil {
 		status = fmt.Sprintf(status, values)
@@ -113,17 +113,21 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// Handle POST and GET requests
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
+			//TODO refactor postHnadler to return and error, which would updateStatus and let getHandler happen always
 			postHandler(w, r)
 			return
 		}
 		getHandler(w, r)
 	})
 
+	mux.HandleFunc("/dapp_image", func(w http.ResponseWriter, r *http.Request) {
+		updateDappImage(w)
+	})
+
 	// Include static content
-	mux.Handle("/state/", http.StripPrefix("/state/", http.FileServer(http.Dir("state"))))
+	//mux.Handle("/state/", http.StripPrefix("/state/", http.FileServer(http.Dir("state"))))
 
 	// Add middleware
 	muxWithSessionMiddleware := sessionManager.LoadAndSave(mux)

@@ -4,30 +4,13 @@
 package image
 
 import (
-	"fmt"
 	"image"
 	"image/draw"
 	"image/png"
 	"io"
 	"log"
 	"os"
-
-	"github.com/marcelstanley/millionerc20"
 )
-
-const DAPP_IMAGE_NAME = ".dapp_image.png"
-
-var dappImage *image.RGBA
-
-func init() {
-	//Check for local file and either load it or create a new one as the DApp image
-	var err error
-	dappImage, err = Load(DAPP_IMAGE_NAME)
-	if err != nil {
-		dappImage = image.NewRGBA(image.Rect(0, 0, millionerc20.MAX_DIMENSION, millionerc20.MAX_DIMENSION))
-		log.Printf("created %v\n", DAPP_IMAGE_NAME)
-	}
-}
 
 func Save(filename string, img image.Image) error {
 	f, err := os.Create(filename)
@@ -41,6 +24,7 @@ func Save(filename string, img image.Image) error {
 		return err
 	}
 
+	log.Printf("saved image to %v\n", f.Name())
 	return nil
 }
 
@@ -51,6 +35,7 @@ func Load(filename string) (*image.RGBA, error) {
 	}
 	defer f.Close()
 
+	log.Printf("loaded image from %v\n", f.Name())
 	return Decode(f)
 }
 
@@ -65,15 +50,4 @@ func Decode(r io.Reader) (*image.RGBA, error) {
 	draw.Draw(rgba, rgba.Bounds(), img, b.Min, draw.Src)
 
 	return rgba, nil
-}
-
-func AddToDappImage(img *image.RGBA) error {
-	draw.Draw(dappImage, img.Bounds(), img, image.Pt(0, 0), draw.Over)
-
-	err := Save(DAPP_IMAGE_NAME, dappImage)
-	if err != nil {
-		return fmt.Errorf("image not saved: %v", err)
-	}
-
-	return nil
 }
