@@ -8,6 +8,7 @@ templ status(response string) {
    <div>{ response }</div>
 }
 
+// TODO Add input validation (via templ?)
 templ form() {
     <h2>Submit your image:</h2>
     <form action="/" enctype="multipart/form-data" method="POST">

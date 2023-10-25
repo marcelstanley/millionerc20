@@ -11,6 +11,7 @@ import (
 
 const MAX_DIMENSION = 1000
 
+// Input types
 type MetaImage struct {
 	// Rect defines the placement of the user image
 	Rect image.Rectangle

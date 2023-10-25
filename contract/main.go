@@ -37,7 +37,7 @@ func (c *MillionErc20Contract) Advance(env eggroll.Env) (any, error) {
 // Set user image bits into the DApp bitmap
 func (c *MillionErc20Contract) saveImage(env eggroll.Env, img *millionerc20.MetaImage) (*millionerc20.Confirmation, error) {
 	if !isValid(img.Rect) {
-		return &millionerc20.Confirmation{Value: false}, fmt.Errorf("image '%v' is out of bounds", img.Rect)
+		return /*&millionerc20.Confirmation{Value: false}*/ nil, fmt.Errorf("image '%v' is out of bounds", img.Rect)
 	}
 
 	rect := img.Rect
@@ -50,7 +50,7 @@ func (c *MillionErc20Contract) saveImage(env eggroll.Env, img *millionerc20.Meta
 	for {
 		pixel := uint32(j)
 		if c.Bmap.Contains(pixel) {
-			return &millionerc20.Confirmation{Value: false}, fmt.Errorf("bit %v already set", pixel)
+			return /*&millionerc20.Confirmation{Value: false}*/ nil, fmt.Errorf("bit %v already set", pixel)
 		}
 		c.Bmap.Set(pixel)
 
