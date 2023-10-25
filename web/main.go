@@ -35,7 +35,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 	//log.Printf("response: %v\n", response)
 }
 
-func postHandler(w http.ResponseWriter, r *http.Request) {
+func postHandler(w http.ResponseWriter, r *http.Request) error {
 	// Update state
 	// TODO Should we limit the form size? I don't think so
 	//	r.Body = http.MaxBytesReader(w, r.Body, MAX_UPLOAD_SIZE)
@@ -43,28 +43,24 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO Make sure we repond with an error if the image is too big
 	// XXX This does not seemt to be working
 	if err := r.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
-		updateStatus(w, r, "Max upload size of 1MB exceeded")
-		return
+		return fmt.Errorf("max upload size of 1MB exceeded")
 	}
 
 	// Get file from request
 	file, fileHeader, err := r.FormFile("file")
 	if err != nil {
-		updateStatus(w, r, err.Error())
-		return
+		return err
 	}
 	defer file.Close()
 
 	f, err := fileHeader.Open()
 	if err != nil {
-		updateStatus(w, r, err.Error())
-		return
+		return err
 	}
 
 	img, err := dapp_cli_image.Decode(f)
 	if err != nil {
-		updateStatus(w, r, err.Error())
-		return
+		return err
 	}
 	//log.Printf("img.Rect: %v\n", img.Rect)
 
@@ -84,11 +80,10 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = dapp_client.SendImageAndWait(image.Pt(x, y), img)
 	if err != nil {
 		log.Printf("err: %v\n", err)
-		updateStatus(w, r, err.Error())
-		return
+		return err
 	}
 
-	getHandler(w, r)
+	return nil
 }
 
 func updateDappImage(w http.ResponseWriter) {
@@ -103,7 +98,6 @@ func updateStatus(w http.ResponseWriter, r *http.Request, status string, values 
 		status = fmt.Sprintf(status, values)
 	}
 	sessionManager.Put(r.Context(), "response", status)
-	getHandler(w, r)
 }
 
 func main() {
@@ -115,9 +109,9 @@ func main() {
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			//TODO refactor postHnadler to return and error, which would updateStatus and let getHandler happen always
-			postHandler(w, r)
-			return
+			if err := postHandler(w, r); err != nil {
+				updateStatus(w, r, err.Error())
+			}
 		}
 		getHandler(w, r)
 	})
